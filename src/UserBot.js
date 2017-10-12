@@ -56,8 +56,29 @@ var adminId = '123',
       getchannelstimes: function(host, chat_id, channelId){
           events.raise('getChannelsTimes', {channelId: channelId, chat_id: chat_id, host: host});
       },
-      voteHandler: function(userId, channelId, postId, data){
+      voteHandler: function(userId, channelId, postId, data, host){
           let result = voteService.voteUser(userId, channelId, postId, data);
+          if(result && result.status){
+              var like = {
+                  value: 'like',
+                  type: 'vote'
+              };
+              var dislike = {
+                  value: 'dislike',
+                  type: 'vote'
+              }
+              let keyboard = {
+                  inline_keyboard: [
+                    [{text: "👍" + (result.counts.like || 0), callback_data: JSON.stringify(like)}, {text: "😕" + (result.counts.dislike || 0), callback_data: JSON.stringify(dislike)}]
+                  ],
+                  one_time_keyboard: true
+              }
+              console.log(postId)
+              request.post({url: host + 'editMessageReplyMarkup', form: {chat_id: channelId, message_id: postId, reply_markup: JSON.stringify(keyboard)}},
+              function(err, response, body) {
+                  console.log(err);
+              })
+          }
           console.log(result)
       }
     }
@@ -102,10 +123,11 @@ function processResponse(data, host){
             && data2.type
             && data2.type === 'vote'){
                 var userId = lastCommand.callback_query.from.username,
-                    postId = lastCommand.callback_query.message,
+                    postId = lastCommand.callback_query.message.message_id,
                     channelId = lastCommand.callback_query.message.chat.id,
                     data = data2.value;
-                handlers.voteHandler(userId, channelId, postId, data);
+                    console.log(lastCommand.callback_query)
+                handlers.voteHandler(userId, channelId, postId, data, host);
             }
   }
 

@@ -18,11 +18,11 @@ function getChannelPostResults(channel_id, post_id){
     return currentPosts;
 }
 
-function deleteVoiceFromOtherGroup(voices, user_Id){
+function deleteVoiceFromOtherGroup(votes, user_Id){
     var results,
         index;
-    for(var key in voices){
-        results = voices[key];
+    for(var key in votes){
+        results = votes[key];
         if(results){
             index = results.indexOf(user_Id);
             if(index > -1){
@@ -37,19 +37,38 @@ function addUserVoice(voices, user_Id){
     voices.push(user_Id);
 }
 
+function getVotesCounts(votes){
+    var results = {}
+    for(var key in votes){
+        results[key] = votes[key].length;
+    }
+    return results;
+}
+
 function voteUser(user_Id, channel_id, post_id, voice){
-    var votes = getChannelPostResults(channel_id, post_id);
-    var voices = votes[voice];
+    var votes = getChannelPostResults(channel_id, post_id),
+        voices = votes[voice],
+        message,
+        counts,
+        result;
     if(!voices){
         voices = []
         votes[voice] = voices;
     }
     if(voices.indexOf(user_Id) > -1){
-        return 'Вы уже голосовали';
+        message = 'Вы уже голосовали';
+        result = false;
     } else {
         deleteVoiceFromOtherGroup(votes, user_Id);
         addUserVoice(voices, user_Id);
-        return 'Ваш голос учтен';
+        message = 'Ваш голос учтен';
+        counts = getVotesCounts(votes);
+        result = true;
+    }
+    return {
+        message: message,
+        counts: counts,
+        status: result
     }
 }
 
