@@ -1,0 +1,10 @@
+{
+	"vkSettings": {
+		"token": "123",
+		"url": "123"
+	},
+	"telegramSettings": {
+		"token": "123",
+		"googleApiKey": "123"
+	}
+}
