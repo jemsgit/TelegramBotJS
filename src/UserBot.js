@@ -8,7 +8,6 @@ var adminId = '123',
     handlers = {
       echo: function(host, chat_id, text){
           text = text || 'hello';
-          console.log('HEREEEE1')
           request.post({url: host + 'sendMessage', form: {chat_id: chat_id, text: text}},
           function(err, response, body) {
               console.log(err);
@@ -58,8 +57,8 @@ var adminId = '123',
           events.raise('getChannelsTimes', {channelId: channelId, chat_id: chat_id, host: host});
       },
       voteHandler: function(userId, channelId, postId, data){
-          console.log('alsdjfasdlfjlasdfjlksdjfljsdflk')
-          voteService.voteUser(userId, channelId, postId, data);
+          let result = voteService.voteUser(userId, channelId, postId, data);
+          console.log(result)
       }
     }
 
@@ -98,13 +97,14 @@ function processResponse(data, host){
           handler(host, chat_id, commandParams.text);
       }
   } else if(lastCommand && lastCommand.callback_query){
+        var data2 = JSON.parse(lastCommand.callback_query.data);
         if(lastCommand.callback_query.data
-            && lastCommand.callback_query.data.type
-            && lastCommand.callback_query.data.type === 'vote'){
+            && data2.type
+            && data2.type === 'vote'){
                 var userId = lastCommand.callback_query.from.username,
                     postId = lastCommand.callback_query.message,
                     channelId = lastCommand.callback_query.message.chat.id,
-                    data = lastCommand.callback_query.data.value;
+                    data = data2.value;
                 handlers.voteHandler(userId, channelId, postId, data);
             }
   }

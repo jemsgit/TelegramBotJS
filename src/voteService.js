@@ -1,22 +1,21 @@
 var fileManager = require('./fileManager');
 
 var service = {}
-
 var posts = {};
 
 function getChannelPostResults(channel_id, post_id){
     var channelVotes = posts[channel_id],
-        posts
+        currentPosts;
     if(!channelVotes){
         channelVotes = {};
         posts[channel_id] = channelVotes;
         channelVotes[post_id] = {};
     }
-    posts = channelVotes[post_id];
-    if(!posts){
-        posts = {}
+    currentPosts = channelVotes[post_id];
+    if(!currentPosts){
+        currentPosts = {}
     }
-    return posts;
+    return currentPosts;
 }
 
 function deleteVoiceFromOtherGroup(voices, user_Id){
@@ -55,5 +54,4 @@ function voteUser(user_Id, channel_id, post_id, voice){
 }
 
 service.voteUser = voteUser;
-
 module.exports = service;
