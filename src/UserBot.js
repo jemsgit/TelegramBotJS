@@ -1,7 +1,8 @@
 var request = require('request'),
-    events = require('./events');
+    events = require('./events'),
+    voteService = require('./voteService');;
 
-var adminId = 'name',
+var adminId = '123',
     timer,
     updateId = 0,
     handlers = {
@@ -28,10 +29,20 @@ var adminId = 'name',
           })
       },
       line: function(host, chat_id, text){
+
+          console.log('12312321')
           events.raise('hello', {chat_id: chat_id, host: host, text: text});
+          var like = {
+              value: 'like',
+              type: 'vote'
+          };
+          var dislike = {
+              value: 'dislike',
+              type: 'vote'
+          }
           let keyboard = {
               inline_keyboard: [
-                [{text: "👍", callback_data: '+'}, {text: "😕", callback_data: '-'}]
+                [{text: "👍", callback_data: JSON.stringify(like)}, {text: "😕", callback_data: JSON.stringify(dislike)}]
               ],
               one_time_keyboard: true
           }
@@ -45,6 +56,10 @@ var adminId = 'name',
       },
       getchannelstimes: function(host, chat_id, channelId){
           events.raise('getChannelsTimes', {channelId: channelId, chat_id: chat_id, host: host});
+      },
+      voteHandler: function(userId, channelId, postId, data){
+          console.log('alsdjfasdlfjlasdfjlksdjfljsdflk')
+          voteService.voteUser(userId, channelId, postId, data);
       }
     }
 
@@ -67,18 +82,31 @@ function processResponse(data, host){
   if(lastCommand && lastCommand.update_id){
       updateId = lastCommand.update_id + 1;
   }
-  if(lastCommand
+
+    if(lastCommand
     && lastCommand.message
     && lastCommand.message.from
     && lastCommand.message.from.username === adminId){
+
       console.log(lastCommand.message)
       var text = lastCommand.message.text.trim();
       var chat_id = lastCommand.message.chat.id;
       if(text.charAt(0) === '/'){
           var commandParams = getCommandParams(text);
+          console.log(commandParams)
           var handler = getHandlerByCommand(commandParams.command);
           handler(host, chat_id, commandParams.text);
       }
+  } else if(lastCommand && lastCommand.callback_query){
+        if(lastCommand.callback_query.data
+            && lastCommand.callback_query.data.type
+            && lastCommand.callback_query.data.type === 'vote'){
+                var userId = lastCommand.callback_query.from.username,
+                    postId = lastCommand.callback_query.message,
+                    channelId = lastCommand.callback_query.message.chat.id,
+                    data = lastCommand.callback_query.data.value;
+                handlers.voteHandler(userId, channelId, postId, data);
+            }
   }
 
 }

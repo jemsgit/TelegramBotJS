@@ -53,3 +53,7 @@ function voteUser(user_Id, channel_id, post_id, voice){
         return 'Ваш голос учтен';
     }
 }
+
+service.voteUser = voteUser;
+
+module.exports = service;
