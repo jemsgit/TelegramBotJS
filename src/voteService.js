@@ -3,29 +3,29 @@ var fileManager = require('./fileManager');
 var service = {}
 var posts = {};
 
-function getChannelPostResults(channel_id, post_id){
+function getChannelPostResults(channel_id, post_id) {
     var channelVotes = posts[channel_id],
         currentPosts;
-    if(!channelVotes){
+    if (!channelVotes) {
         channelVotes = {};
         posts[channel_id] = channelVotes;
         channelVotes[post_id] = {};
     }
     currentPosts = channelVotes[post_id];
-    if(!currentPosts){
+    if (!currentPosts) {
         currentPosts = {}
     }
     return currentPosts;
 }
 
-function deleteVoiceFromOtherGroup(votes, user_Id){
+function deleteVoiceFromOtherGroup(votes, user_Id) {
     var results,
         index;
-    for(var key in votes){
+    for (var key in votes) {
         results = votes[key];
-        if(results){
+        if (results) {
             index = results.indexOf(user_Id);
-            if(index > -1){
+            if (index > -1) {
                 results.splice(index, 1);
                 break;
             }
@@ -33,29 +33,29 @@ function deleteVoiceFromOtherGroup(votes, user_Id){
     }
 }
 
-function addUserVoice(voices, user_Id){
+function addUserVoice(voices, user_Id) {
     voices.push(user_Id);
 }
 
-function getVotesCounts(votes){
+function getVotesCounts(votes) {
     var results = {}
-    for(var key in votes){
+    for (var key in votes) {
         results[key] = votes[key].length;
     }
     return results;
 }
 
-function voteUser(user_Id, channel_id, post_id, voice){
+function voteUser(user_Id, channel_id, post_id, voice) {
     var votes = getChannelPostResults(channel_id, post_id),
         voices = votes[voice],
         message,
         counts,
         result;
-    if(!voices){
+    if (!voices) {
         voices = []
         votes[voice] = voices;
     }
-    if(voices.indexOf(user_Id) > -1){
+    if (voices.indexOf(user_Id) > -1) {
         message = 'Вы уже голосовали';
         result = false;
     } else {
