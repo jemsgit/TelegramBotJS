@@ -55,7 +55,7 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                 chat_id: channel_id,
                 text: message,
                 disable_web_page_preview: this.disable_web_page_preview,
-                disable_notification: this.isWeekend() + ''
+                disable_notification: this.isWeekend()
             }
 
             request.post({
@@ -100,7 +100,7 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                                 message_id: body.result.message_id,
                                 text: message,
                                 disable_web_page_preview: that.disable_web_page_preview,
-                                disable_notification: this.isWeekend() + '',
+                                disable_notification: that.isWeekend(),
                                 reply_markup: JSON.stringify({
                                     inline_keyboard: [
                                         [{
