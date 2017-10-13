@@ -27,9 +27,7 @@ var adminId = '123',
               console.log(err);
           })
       },
-      line: function(host, chat_id, text){
-
-          console.log('12312321')
+      test: function(host, chat_id, text){
           events.raise('hello', {chat_id: chat_id, host: host, text: text});
           var like = {
               value: 'like',
@@ -41,13 +39,18 @@ var adminId = '123',
           }
           let keyboard = {
               inline_keyboard: [
-                [{text: "👍", callback_data: JSON.stringify(like)}, {text: "😕", callback_data: JSON.stringify(dislike)}]
+                [{text: "Share Vk", url: 'vk.com'},
+                {text: "👍 0", callback_data: JSON.stringify(like)}, {text: "😕 0", callback_data: JSON.stringify(dislike)}]
               ],
               one_time_keyboard: true
           }
           request.post({url: host + 'sendMessage', form: {chat_id: chat_id, text: '123', reply_markup: JSON.stringify(keyboard)}},
           function(err, response, body) {
               console.log(err);
+              request.post({url: host + 'editMessageReplyMarkup', form: {chat_id: chat_id, message_id: body.message_id, reply_markup: JSON.stringify(keyboard)}},
+              function(err, response, body) {
+                  console.log(err);
+              })
           })
       },
       removeLast: function(host, chat_id, channelId){
@@ -56,8 +59,13 @@ var adminId = '123',
       getchannelstimes: function(host, chat_id, channelId){
           events.raise('getChannelsTimes', {channelId: channelId, chat_id: chat_id, host: host});
       },
-      voteHandler: function(userId, channelId, postId, data, host){
-          let result = voteService.voteUser(userId, channelId, postId, data);
+      voteHandler: function(userId, channelId, channelName, postId, text, data, host){
+          var result = voteService.voteUser(userId, channelId, postId, data);
+          var shareLink = 'https://t.me/' + channelName + '/' + postId
+          var shareVkLink = 'http://vk.com/share.php?url=' + shareLink + '&title=' + text;
+          var shareFbLink = 'https://www.facebook.com/sharer/sharer.php?u=' + shareLink;
+
+          console.log(shareVkLink)
           if(result && result.status){
               var like = {
                   value: 'like',
@@ -69,7 +77,10 @@ var adminId = '123',
               }
               let keyboard = {
                   inline_keyboard: [
-                    [{text: "👍" + (result.counts.like || 0), callback_data: JSON.stringify(like)}, {text: "😕" + (result.counts.dislike || 0), callback_data: JSON.stringify(dislike)}]
+                    [{text: "👍 " + (result.counts.like || 0), callback_data: JSON.stringify(like)},
+                    {text: "😕" + (result.counts.dislike || 0), callback_data: JSON.stringify(dislike)},
+                    {text: "Share Vk", url: shareVkLink},
+                    {text: "Share Fb", url: shareFbLink},]
                   ],
                   one_time_keyboard: true
               }
@@ -80,6 +91,10 @@ var adminId = '123',
               })
           }
           console.log(result)
+      },
+      shareHandler: function(queryId, url, postId, channelId, host){
+
+        console.log(queryId)
       }
     }
 
@@ -93,15 +108,18 @@ function processResponse(data, host){
     console.log(error);
     return;
   }
-  console.log(data)
+
   data = data.result;
   if(!data){
     return;
   }
+
   var lastCommand = data[data.length-1];
   if(lastCommand && lastCommand.update_id){
       updateId = lastCommand.update_id + 1;
   }
+
+  console.log(lastCommand)
 
     if(lastCommand
     && lastCommand.message
@@ -118,16 +136,29 @@ function processResponse(data, host){
           handler(host, chat_id, commandParams.text);
       }
   } else if(lastCommand && lastCommand.callback_query){
-        var data2 = JSON.parse(lastCommand.callback_query.data);
-        if(lastCommand.callback_query.data
-            && data2.type
-            && data2.type === 'vote'){
-                var userId = lastCommand.callback_query.from.username,
-                    postId = lastCommand.callback_query.message.message_id,
-                    channelId = lastCommand.callback_query.message.chat.id,
-                    data = data2.value;
-                    console.log(lastCommand.callback_query)
-                handlers.voteHandler(userId, channelId, postId, data, host);
+        var query = lastCommand.callback_query,
+            queryData = JSON.parse(lastCommand.callback_query.data);
+            console.log('SEWWWWWW')
+            console.log(query.message.entities)
+        if(query.data
+            && queryData.type){
+              if(queryData.type === 'vote'){
+                var userId = query.from.username,
+                    postId = query.message.message_id,
+                    channelId = query.message.chat.id,
+                    channelName = query.message.chat.username,
+                    data = queryData.value,
+                    text = query.message.text;
+                    console.log(query)
+                handlers.voteHandler(userId, channelId, channelName, postId, text, data, host);
+              } else if(queryData.type === 'share'){
+                console.log(queryData)
+                  var url = queryData.url,
+                      queryId = query.id,
+                      postId = query.message.message_id,
+                      channelId = query.message.chat.username;
+                  handlers.shareHandler(queryId, url, postId, channelId, host);
+              }
             }
   }
 

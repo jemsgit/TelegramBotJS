@@ -24,7 +24,7 @@ TelegramRequestManager.prototype.botReply = function(host, chat_id, message){
 }
 
 TelegramRequestManager.prototype.updateMessage = function(prop){
-    var url = that.host + 'editMessageText';
+    var url = this.host + 'editMessageText';
 
     request.post({url: url, form: prop}, function(err, response, body) {
         if(err){
@@ -60,28 +60,42 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type){
                     var shareLink = 'https://t.me/' + body.result.chat.username + '/' + body.result.message_id
                     var shareVkLink = 'http://vk.com/share.php?url=' + shareLink + '&title=' + data.message;
                     var shareFbLink = 'https://www.facebook.com/sharer/sharer.php?u=' + shareLink;
-                    var url = that.host + 'editMessageText';
-
                     that.googleUrl.shorten(shareVkLink, function( err1, shortUrlVk ) {
                         that.googleUrl.shorten(shareFbLink, function( err2, shortUrlFb ) {
+
+                        var like = {
+                            value: 'like',
+                            type: 'vote'
+                        };
+                        var dislike = {
+                            value: 'dislike',
+                            type: 'vote'
+                        }
+
+                          console.log(shareVkOptions)
+                          console.log(shareFbOptions)
                             var prop = {
-                                chat_id: '@' + body.result.chat.username,
+                                chat_id: '@' + body.result.chat.id,
                                 message_id: body.result.message_id,
                                 text:message,
                                 disable_web_page_preview: that.disable_web_page_preview,
                                 disable_notification: that.isWeekend() + '',
                                 reply_markup: JSON.stringify({
                                     inline_keyboard: [
-                                        [{text: "👍", callback_data: '+'}, {text: "😕", callback_data: '-'},
-                                        {text: "Share Vk", url: shortUrlVk}, {text: "Share Fb", url: shortUrlFb}]
+                                        [{text: "👍 0", callback_data: JSON.stringify(like)},
+                                        {text: "😕 0", callback_data: JSON.stringify(dislike)},
+                                        {text: "Share Vk", url: shortUrlVk},
+                                        {text: "Share Fb", url: shortUrlFb}]
                                     ]
                                 })
                             }
+                            console.log(body.result)
 
                             that.updateMessage(prop);
 
-                        });
-                    });
+                          })
+                        })
+
 
                 });
             break;
