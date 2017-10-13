@@ -24,33 +24,45 @@ var adminId = '123',
           }
           request.post({url: host + 'sendMessage', form: {chat_id: chat_id, text: '123', reply_markup: JSON.stringify(keyboard)}},
           function(err, response, body) {
-              console.log(err);
+              console.log(body);
           })
       },
       test: function(host, chat_id, text){
           events.raise('hello', {chat_id: chat_id, host: host, text: text});
+          var shareButtonsClean = [
+              {
+                  text: 'Vk',
+                  url: 'https://goo.gl/4k1Sf2'
+              },
+              {
+                  text: 'Fb',
+                  url: 'https://goo.gl/4k1Sf2'
+              }
+          ]
+          shareButtons = setShareButtons(shareButtonsClean);
+          console.log(shareButtons)
           var like = {
-              value: 'like',
-              type: 'vote'
+              val: 'like',
+              t: 'vote',
+              sb: shareButtons
           };
           var dislike = {
-              value: 'dislike',
-              type: 'vote'
+              val: 'dislike',
+              t: 'vote',
+              sb: shareButtons
           }
+
           let keyboard = {
               inline_keyboard: [
-                [{text: "Share Vk", url: 'vk.com'},
+                [shareButtonsClean[1], shareButtonsClean[0],
                 {text: "👍 0", callback_data: JSON.stringify(like)}, {text: "😕 0", callback_data: JSON.stringify(dislike)}]
               ],
               one_time_keyboard: true
           }
+
           request.post({url: host + 'sendMessage', form: {chat_id: chat_id, text: '123', reply_markup: JSON.stringify(keyboard)}},
           function(err, response, body) {
-              console.log(err);
-              request.post({url: host + 'editMessageReplyMarkup', form: {chat_id: chat_id, message_id: body.message_id, reply_markup: JSON.stringify(keyboard)}},
-              function(err, response, body) {
-                  console.log(err);
-              })
+              console.log(body);
           })
       },
       removeLast: function(host, chat_id, channelId){
@@ -59,35 +71,38 @@ var adminId = '123',
       getchannelstimes: function(host, chat_id, channelId){
           events.raise('getChannelsTimes', {channelId: channelId, chat_id: chat_id, host: host});
       },
-      voteHandler: function(userId, channelId, channelName, postId, text, data, host){
+      voteHandler: function(userId, channelId, channelName, postId, text, data, sb, host){
           var result = voteService.voteUser(userId, channelId, postId, data);
-          var shareLink = 'https://t.me/' + channelName + '/' + postId
-          var shareVkLink = 'http://vk.com/share.php?url=' + shareLink + '&title=' + text;
-          var shareFbLink = 'https://www.facebook.com/sharer/sharer.php?u=' + shareLink;
+          var buttons = getShareButtons(sb);
 
-          console.log(shareVkLink)
+
           if(result && result.status){
               var like = {
-                  value: 'like',
-                  type: 'vote'
+                  val: 'like',
+                  t: 'vote',
+                  sb: sb
               };
               var dislike = {
-                  value: 'dislike',
-                  type: 'vote'
+                  val: 'dislike',
+                  t: 'vote',
+                  sb: sb
+              }
+
+              var inline_keyboard = [{text: "👍 " + (result.counts.like || 0), callback_data: JSON.stringify(like)},
+              {text: "😕" + (result.counts.dislike || 0), callback_data: JSON.stringify(dislike)}];
+              if(buttons && buttons.length){
+                  inline_keyboard = buttons.concat(inline_keyboard);
               }
               let keyboard = {
                   inline_keyboard: [
-                    [{text: "👍 " + (result.counts.like || 0), callback_data: JSON.stringify(like)},
-                    {text: "😕" + (result.counts.dislike || 0), callback_data: JSON.stringify(dislike)},
-                    {text: "Share Vk", url: shareVkLink},
-                    {text: "Share Fb", url: shareFbLink},]
+                    inline_keyboard
                   ],
                   one_time_keyboard: true
               }
-              console.log(postId)
+
               request.post({url: host + 'editMessageReplyMarkup', form: {chat_id: channelId, message_id: postId, reply_markup: JSON.stringify(keyboard)}},
               function(err, response, body) {
-                  console.log(err);
+
               })
           }
           console.log(result)
@@ -97,6 +112,40 @@ var adminId = '123',
         console.log(queryId)
       }
     }
+
+function getShareButtons(text){
+    var buttons = [];
+    console.log(text)
+    if(!text){
+        return buttons;
+    }
+    var items = text.split('!');
+    if(items){
+        items.forEach(function(item){
+            var link = item.split(':');
+            var button = {
+                text: link[0],
+                url: 'goo.gl/'+link[1]
+            }
+            buttons.push(button);
+        })
+    }
+    return buttons;
+}
+
+function setShareButtons(buttons){
+    var shareBut = ''
+    if(buttons && buttons.length){
+        buttons.forEach(function(item, i){
+            var url = item.url.split('goo.gl/');
+            shareBut += item.text + ':' + url[1];
+            if(i < (buttons.length - 1)){
+                shareBut+='!'
+            }
+        })
+    }
+    return shareBut;
+}
 
 function processResponse(data, host){
   if(!data){
@@ -138,19 +187,18 @@ function processResponse(data, host){
   } else if(lastCommand && lastCommand.callback_query){
         var query = lastCommand.callback_query,
             queryData = JSON.parse(lastCommand.callback_query.data);
-            console.log('SEWWWWWW')
-            console.log(query.message.entities)
         if(query.data
-            && queryData.type){
-              if(queryData.type === 'vote'){
+            && queryData.t){
+              if(queryData.t === 'vote'){
                 var userId = query.from.username,
                     postId = query.message.message_id,
                     channelId = query.message.chat.id,
                     channelName = query.message.chat.username,
-                    data = queryData.value,
+                    data = queryData.val,
+                    sb = queryData.sb,
                     text = query.message.text;
                     console.log(query)
-                handlers.voteHandler(userId, channelId, channelName, postId, text, data, host);
+                handlers.voteHandler(userId, channelId, channelName, postId, text, data, sb, host);
               } else if(queryData.type === 'share'){
                 console.log(queryData)
                   var url = queryData.url,

@@ -27,6 +27,7 @@ TelegramRequestManager.prototype.updateMessage = function(prop){
     var url = this.host + 'editMessageText';
 
     request.post({url: url, form: prop}, function(err, response, body) {
+        console.log(body)
         if(err){
             console.log('Error update buttons: ', err)
         }
@@ -63,23 +64,35 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type){
                     that.googleUrl.shorten(shareVkLink, function( err1, shortUrlVk ) {
                         that.googleUrl.shorten(shareFbLink, function( err2, shortUrlFb ) {
 
+
+                        var shareButtons = [
+                            {
+                                text: 'Vk',
+                                url: shortUrlVk
+                            },
+                            {
+                                text: 'Fb',
+                                url: shortUrlFb
+                            }
+                        ]
+                        var sb = setShareButtons(shareButtons);
                         var like = {
-                            value: 'like',
-                            type: 'vote'
+                            val: 'like',
+                            t: 'vote',
+                            sb: sb
                         };
                         var dislike = {
-                            value: 'dislike',
-                            type: 'vote'
+                            val: 'dislike',
+                            t: 'vote',
+                            sb: sb
                         }
-
-                          console.log(shareVkOptions)
-                          console.log(shareFbOptions)
+                        console.log(like)
                             var prop = {
-                                chat_id: '@' + body.result.chat.id,
+                                chat_id: body.result.chat.id,
                                 message_id: body.result.message_id,
                                 text:message,
                                 disable_web_page_preview: that.disable_web_page_preview,
-                                disable_notification: that.isWeekend() + '',
+                                disable_notification: true + '',
                                 reply_markup: JSON.stringify({
                                     inline_keyboard: [
                                         [{text: "👍 0", callback_data: JSON.stringify(like)},
@@ -101,6 +114,20 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type){
             break;
     }
 
+}
+
+function setShareButtons(buttons){
+    var shareBut = ''
+    if(buttons && buttons.length){
+        buttons.forEach(function(item, i){
+            var url = item.url.split('goo.gl/');
+            shareBut += item.text + ':' + url[1];
+            if(i < (buttons.length - 1)){
+                shareBut+='!'
+            }
+        })
+    }
+    return shareBut;
 }
 
 module.exports = TelegramRequestManager;
