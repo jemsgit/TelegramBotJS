@@ -56,11 +56,11 @@ var adminId = '123',
                 text: text
             });
             var shareButtonsClean = [{
-                    text: 'Vk',
+                    text: '📢Vk',
                     url: 'https://goo.gl/4k1Sf2'
                 },
                 {
-                    text: 'Fb',
+                    text: '📢Fb',
                     url: 'https://goo.gl/4k1Sf2'
                 }
             ]
@@ -253,7 +253,7 @@ function processResponse(data, host) {
         if (query.data &&
             queryData.t) {
             if (queryData.t === 'vote') {
-                var userId = query.from.username,
+                var userId = query.from.username || query.from.id,
                     postId = query.message.message_id,
                     channelId = query.message.chat.id,
                     channelName = query.message.chat.username,

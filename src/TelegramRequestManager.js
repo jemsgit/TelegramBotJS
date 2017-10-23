@@ -75,11 +75,11 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                     that.googleUrl.shorten(shareVkLink, function(err1, shortUrlVk) {
                         that.googleUrl.shorten(shareFbLink, function(err2, shortUrlFb) {
                             var shareButtons = [{
-                                    text: 'Vk',
+                                    text: '📢Vk',
                                     url: shortUrlVk
                                 },
                                 {
-                                    text: 'Fb',
+                                    text: '📢Fb',
                                     url: shortUrlFb
                                 }
                             ]
@@ -112,11 +112,11 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                                                 callback_data: JSON.stringify(dislike)
                                             },
                                             {
-                                                text: "Share Vk",
+                                                text: "📢 Vk",
                                                 url: shortUrlVk
                                             },
                                             {
-                                                text: "Share Fb",
+                                                text: "📢 Fb",
                                                 url: shortUrlFb
                                             }
                                         ]
