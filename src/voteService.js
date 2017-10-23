@@ -1,4 +1,5 @@
-var fileManager = require('./fileManager');
+var fileManager = require('./fileManager'),
+    events = require('./events');
 
 var service = {}
 var posts = {};
@@ -61,6 +62,7 @@ function voteUser(user_Id, channel_id, post_id, voice) {
     } else {
         deleteVoiceFromOtherGroup(votes, user_Id);
         addUserVoice(voices, user_Id);
+        events.raise('vote', {channel_id: channel_id, post_id: post_id, result: votes})
         message = 'Ваш голос учтен';
         counts = getVotesCounts(votes);
         result = true;
@@ -72,5 +74,20 @@ function voteUser(user_Id, channel_id, post_id, voice) {
     }
 }
 
+function setVotes(votes){
+    if(!votes){
+        posts = {}
+    } else {
+        posts = votes
+    }
+    
+}
+
 service.voteUser = voteUser;
+service.setVotes = setVotes;
+
+function getResultsFromDB(){
+    fileManager.getVoteResults()
+} 
+
 module.exports = service;

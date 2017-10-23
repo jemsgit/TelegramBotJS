@@ -308,11 +308,12 @@ function getMessageChecker(host) {
     }
 }
 
-function UserBot(settings) {
+function UserBot(settings, votes) {
     if (settings && settings.token) {
         this.token = settings.token;
         this.time = 1500;
         this.host = "https://api.telegram.org/bot" + this.token + "/";
+        voteService.setVotes(votes);
     }
 
 }

@@ -36,8 +36,9 @@ FileManager.prototype.readDataFromFile = function(path){
      }
 
      return result;
-
  }
+
+
 
  FileManager.prototype.getOldTitlesFromFile = function(filePath){
      var result = this.readDataFromFile(filePath),
@@ -55,6 +56,31 @@ FileManager.prototype.readDataFromFile = function(path){
          lines = newData.concat(lines);
          fs.writeFileSync(filePath, lines.join('\r\n'));
      }
+ }
+
+ FileManager.prototype.getVoteResults = function(path){
+     var content = this.readDataFromJson(path);
+     content = content || {};
+     return content;
+ }
+
+FileManager.prototype.getSettings = function(path){
+     var content = this.readDataFromJson(path);
+     return content;
+ }
+
+ FileManager.prototype.vote = function(params){
+     var channel = params.channel_id, 
+        post = params.post_id, 
+        result = params.result
+     var results = this.getVoteResults('./channels/votes.json');
+     results[channel] = results[channel] || {};
+     results[channel][post] = result;
+
+
+     fs.writeFile('./channels/votes.json', JSON.stringify(results), 'utf8', function (err) {
+     if (err) return console.log(err);
+  });
  }
 
 var fileManager = new FileManager();
