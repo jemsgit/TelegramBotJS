@@ -79,14 +79,15 @@ var adminId = '123',
 
             let keyboard = {
                 inline_keyboard: [
-                    [shareButtonsClean[1], shareButtonsClean[0],
+                    [
                         {
                             text: "👍 0",
                             callback_data: JSON.stringify(like)
                         }, {
                             text: "😕 0",
                             callback_data: JSON.stringify(dislike)
-                        }
+                        },
+                        shareButtonsClean[1], shareButtonsClean[0]
                     ]
                 ],
                 one_time_keyboard: true
@@ -119,7 +120,8 @@ var adminId = '123',
             });
         },
         voteHandler: function(userId, channelId, channelName, postId, text, data, sb, host) {
-            var result = voteService.voteUser(userId, channelId, postId, data);
+            console.log(userId, channelId, channelName, postId)
+            var result = voteService.voteUser(userId, channelName, postId, data);
             var buttons = getShareButtons(sb);
 
 
@@ -136,7 +138,7 @@ var adminId = '123',
                 }
 
                 var inline_keyboard = [{
-                        text: "👍 " + (result.counts.like || 0),
+                        text: "👌 " + (result.counts.like || 0),
                         callback_data: JSON.stringify(like)
                     },
                     {
@@ -145,7 +147,7 @@ var adminId = '123',
                     }
                 ];
                 if (buttons && buttons.length) {
-                    inline_keyboard = buttons.concat(inline_keyboard);
+                    inline_keyboard = inline_keyboard.concat(buttons);
                 }
                 let keyboard = {
                     inline_keyboard: [

@@ -104,7 +104,7 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                                 reply_markup: JSON.stringify({
                                     inline_keyboard: [
                                         [{
-                                                text: "👍 0",
+                                                text: "👌 0",
                                                 callback_data: JSON.stringify(like)
                                             },
                                             {
