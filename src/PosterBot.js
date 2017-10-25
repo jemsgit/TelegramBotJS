@@ -40,6 +40,7 @@ PosterBot.prototype.startBot = function() {
         this.scheduler.setPublicsPostTimer(this.publicsList);
     }
     if (this.channelsList) {
+        console.log(this.channelsList)
         this.scheduler.setTelegramPostTimer(this.channelsList);
     }
     if (this.stealerSettings) {

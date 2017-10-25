@@ -46,7 +46,7 @@ function getVotesCounts(votes) {
     return results;
 }
 
-function voteUser(user_Id, channel_id, post_id, voice) {
+function voteUser(user_Id, channel_id, post_id, voice, isFake) {
     var votes = getChannelPostResults(channel_id, post_id),
         voices = votes[voice],
         message,
@@ -56,8 +56,13 @@ function voteUser(user_Id, channel_id, post_id, voice) {
         voices = []
         votes[voice] = voices;
     }
+    if(isFake){
+        addUserVoice(voices, user_Id);
+        return true;
+    }
     if (voices.indexOf(user_Id) > -1) {
         message = 'Вы уже голосовали';
+        counts = getVotesCounts(votes)
         result = false;
     } else {
         deleteVoiceFromOtherGroup(votes, user_Id);

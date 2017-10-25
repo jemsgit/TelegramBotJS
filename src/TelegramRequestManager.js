@@ -40,7 +40,6 @@ TelegramRequestManager.prototype.updateMessage = function(prop) {
         url: url,
         form: prop
     }, function(err, response, body) {
-        console.log(body)
     });
 }
 
@@ -63,7 +62,8 @@ TelegramRequestManager.prototype.postData = function(channel_id, data, type) {
                     form: propertiesObject
                 },
                 function(err, response, body) {
-                    console.log(response.statusCode + ' - ' + data.link);
+                    var date = new Date()
+                    console.log(response.statusCode + ' - ' + data.link + '' + date);
 
                     var body = JSON.parse(body);
                     if (!body || !body.result) {

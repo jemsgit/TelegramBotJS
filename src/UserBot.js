@@ -41,7 +41,7 @@ var adminId = '123',
                     url: host + 'sendMessage',
                     form: {
                         chat_id: chat_id,
-                        text: '123',
+                        text: 'hello test',
                         reply_markup: JSON.stringify(keyboard)
                     }
                 },
@@ -119,8 +119,32 @@ var adminId = '123',
                 host: host
             });
         },
-        voteHandler: function(userId, channelId, channelName, postId, text, data, sb, host) {
-            console.log(userId, channelId, channelName, postId)
+        fakeVote: function(queryId, host, chat_id, textParams){
+            textParams = textParams.split(' ');
+            var channelName = textParams[0], 
+                postId = textParams[1],
+                userId = textParams[2],
+                data = textParams[3];
+                //@test_channel 1022 % like
+            var result = voteService.voteUser(userId, channelName, postId, data, true);
+            if(result){
+                request.post({
+                    url: host + 'sendMessage',
+                    form: {
+                        chat_id: chat_id,
+                        text: 'success vote',
+                        reply_markup: JSON.stringify(keyboard)
+                    }
+                },
+                function(err, response, body) {
+                    console.log(body);
+                })
+            }
+        },
+        voteHandler: function(queryId, userId, channelId, channelName, postId, text, data, sb, host) {
+            console.log('----Bot Vote params-----')
+            console.log(userId, channelId, channelName, postId);
+            console.log('---------')
             var result = voteService.voteUser(userId, channelName, postId, data);
             var buttons = getShareButtons(sb);
 
@@ -155,8 +179,15 @@ var adminId = '123',
                     ],
                     one_time_keyboard: true
                 }
-
                 request.post({
+                        url: host + 'answerCallbackQuery',
+                        form:{
+                            callback_query_id: queryId,
+                            text: result.message
+                        }
+                }, function(err, response, body) {
+                    if(!err){
+                        request.post({
                         url: host + 'editMessageReplyMarkup',
                         form: {
                             chat_id: channelId,
@@ -167,18 +198,18 @@ var adminId = '123',
                     function(err, response, body) {
 
                     })
+                }
+            })
+ 
             }
-            console.log(result)
         },
         shareHandler: function(queryId, url, postId, channelId, host) {
-
             console.log(queryId)
         }
     }
 
 function getShareButtons(text) {
     var buttons = [];
-    console.log(text)
     if (!text) {
         return buttons;
     }
@@ -231,19 +262,18 @@ function processResponse(data, host) {
         updateId = lastCommand.update_id + 1;
     }
 
-    console.log(lastCommand)
-
     if (lastCommand &&
         lastCommand.message &&
         lastCommand.message.from &&
         lastCommand.message.from.username === adminId) {
 
-        console.log(lastCommand.message)
         var text = lastCommand.message.text.trim();
         var chat_id = lastCommand.message.chat.id;
         if (text.charAt(0) === '/') {
             var commandParams = getCommandParams(text);
-            console.log(commandParams)
+            console.log('----Bot message params-----');
+            console.log(commandParams);
+            console.log('---------');
             var handler = getHandlerByCommand(commandParams.command);
             handler(host, chat_id, commandParams.text);
         }
@@ -260,10 +290,8 @@ function processResponse(data, host) {
                     data = queryData.val,
                     sb = queryData.sb,
                     text = query.message.text;
-                console.log(query)
-                handlers.voteHandler(userId, channelId, channelName, postId, text, data, sb, host);
+                handlers.voteHandler(query.id, userId, channelId, channelName, postId, text, data, sb, host);
             } else if (queryData.type === 'share') {
-                console.log(queryData)
                 var url = queryData.url,
                     queryId = query.id,
                     postId = query.message.message_id,
@@ -300,7 +328,6 @@ function getHandlerByCommand(command) {
 function getMessageChecker(host) {
     var url = host + 'getUpdates'
     return function() {
-        console.log(url + '?offset=' + updateId)
         request.get(url + '?offset=' + updateId)
             .on('response', function(response, data) {
                 response.on("data", function(data) {
