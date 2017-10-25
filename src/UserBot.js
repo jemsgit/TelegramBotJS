@@ -205,21 +205,21 @@ var adminId = '123',
                             }
                     }, function(err, response, body) {
                         if(!err){
-                            request.post({
-                            url: host + 'editMessageReplyMarkup',
-                            form: {
-                                chat_id: channelId,
-                                message_id: postId,
-                                reply_markup: JSON.stringify(keyboard)
-                            }
-                        },
-                        function(err, response, body) {
 
-                        })
-                    }
-                })
+                        }
+                    });
+                    request.post({
+                        url: host + 'editMessageReplyMarkup',
+                        form: {
+                            chat_id: channelId,
+                            message_id: postId,
+                            reply_markup: JSON.stringify(keyboard)
+                        }
+                    },
+                    function(err, response, body) {
+
+                    })
                 }
-
             }
         },
         shareHandler: function(queryId, url, postId, channelId, host) {

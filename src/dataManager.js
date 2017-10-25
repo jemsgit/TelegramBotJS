@@ -39,7 +39,7 @@ DataManager.prototype.db = null;
 DataManager.prototype.attachEvents = function() {
     var that = this;
     events.on('vote', function(params) {
-        console.log('Vote event')
+        console.log(params)
         that.db.vote(params)
     });
 }
