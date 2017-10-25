@@ -58,6 +58,7 @@ function voteUser(user_Id, channel_id, post_id, voice, isFake) {
     }
     if(isFake){
         addUserVoice(voices, user_Id);
+        events.raise('vote', {channel_id: channel_id, post_id: post_id, result: votes})
         return true;
     }
     if (voices.indexOf(user_Id) > -1) {
@@ -85,7 +86,7 @@ function setVotes(votes){
     } else {
         posts = votes
     }
-    
+
 }
 
 service.voteUser = voteUser;
@@ -93,6 +94,6 @@ service.setVotes = setVotes;
 
 function getResultsFromDB(){
     fileManager.getVoteResults()
-} 
+}
 
 module.exports = service;

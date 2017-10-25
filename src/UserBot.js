@@ -119,9 +119,16 @@ var adminId = '123',
                 host: host
             });
         },
-        fakeVote: function(queryId, host, chat_id, textParams){
-            textParams = textParams.split(' ');
-            var channelName = textParams[0], 
+        fakeVote: function(host, chat_id, textParams, queryId){
+            if(!textParams){
+                return;
+            }
+            textParams = textParams.trim().split(' ');
+            console.log(textParams)
+            if(textParams.length < 4){
+                return;
+            }
+            var channelName = textParams[0],
                 postId = textParams[1],
                 userId = textParams[2],
                 data = textParams[3];
@@ -143,64 +150,76 @@ var adminId = '123',
         },
         voteHandler: function(queryId, userId, channelId, channelName, postId, text, data, sb, host) {
             console.log('----Bot Vote params-----')
-            console.log(userId, channelId, channelName, postId);
+            console.log(userId, channelId, channelName, postId, data);
             console.log('---------')
             var result = voteService.voteUser(userId, channelName, postId, data);
-            var buttons = getShareButtons(sb);
-
-
-            if (result && result.status) {
-                var like = {
-                    val: 'like',
-                    t: 'vote',
-                    sb: sb
-                };
-                var dislike = {
-                    val: 'dislike',
-                    t: 'vote',
-                    sb: sb
-                }
-
-                var inline_keyboard = [{
-                        text: "👌 " + (result.counts.like || 0),
-                        callback_data: JSON.stringify(like)
-                    },
-                    {
-                        text: "😕" + (result.counts.dislike || 0),
-                        callback_data: JSON.stringify(dislike)
+            if (result) {
+                if(result.message && !result.status){
+                    request.post({
+                            url: host + 'answerCallbackQuery',
+                            form:{
+                                callback_query_id: queryId,
+                                text: result.message
+                            }
+                },function(err, response, body) {
+                    if(err){
+                        console.log(err)
                     }
-                ];
-                if (buttons && buttons.length) {
-                    inline_keyboard = inline_keyboard.concat(buttons);
-                }
-                let keyboard = {
-                    inline_keyboard: [
-                        inline_keyboard
-                    ],
-                    one_time_keyboard: true
-                }
-                request.post({
-                        url: host + 'answerCallbackQuery',
-                        form:{
-                            callback_query_id: queryId,
-                            text: result.message
-                        }
-                }, function(err, response, body) {
-                    if(!err){
-                        request.post({
-                        url: host + 'editMessageReplyMarkup',
-                        form: {
-                            chat_id: channelId,
-                            message_id: postId,
-                            reply_markup: JSON.stringify(keyboard)
-                        }
-                    },
-                    function(err, response, body) {
+                })
+            } else if(result.status){
+                    var buttons = getShareButtons(sb);
+                    var like = {
+                        val: 'like',
+                        t: 'vote',
+                        sb: sb
+                    };
+                    var dislike = {
+                        val: 'dislike',
+                        t: 'vote',
+                        sb: sb
+                    }
 
-                    })
+                    var inline_keyboard = [{
+                            text: "👌 " + (result.counts.like || 0),
+                            callback_data: JSON.stringify(like)
+                        },
+                        {
+                            text: "😕" + (result.counts.dislike || 0),
+                            callback_data: JSON.stringify(dislike)
+                        }
+                    ];
+                    if (buttons && buttons.length) {
+                        inline_keyboard = inline_keyboard.concat(buttons);
+                    }
+                    let keyboard = {
+                        inline_keyboard: [
+                            inline_keyboard
+                        ],
+                        one_time_keyboard: true
+                    }
+                    request.post({
+                            url: host + 'answerCallbackQuery',
+                            form:{
+                                callback_query_id: queryId,
+                                text: result.message
+                            }
+                    }, function(err, response, body) {
+                        if(!err){
+                            request.post({
+                            url: host + 'editMessageReplyMarkup',
+                            form: {
+                                chat_id: channelId,
+                                message_id: postId,
+                                reply_markup: JSON.stringify(keyboard)
+                            }
+                        },
+                        function(err, response, body) {
+
+                        })
+                    }
+                })
                 }
-            })
- 
+
             }
         },
         shareHandler: function(queryId, url, postId, channelId, host) {
