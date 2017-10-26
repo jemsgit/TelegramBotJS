@@ -5,6 +5,8 @@ var request = require('request'),
 var adminId = '123',
     timer,
     updateId = 0,
+    newPost,
+    interceptorHandler,
     handlers = {
         echo: function(host, chat_id, text) {
             text = text || 'hello';
@@ -123,6 +125,15 @@ var adminId = '123',
                 chat_id: chat_id,
                 host: host
             });
+        },
+        addpost: function(host, chat_id, textParams){
+            textParams = textParams.trim();
+            var params = textParams.split(' ');
+            newPost = {
+                channelId = params[0],
+                time = params[1]
+            }
+            interceptorHandler = getPost;
         },
         fakeVote: function(host, chat_id, textParams, queryId){
             if(!textParams){
@@ -251,6 +262,31 @@ function getShareButtons(text) {
     return buttons;
 }
 
+function getPost(host, data) {
+    if(data && data.text){
+        var chat_id = data.chat.id;
+        data = data.text
+        if(data === 'cancel'){
+            newPost = null
+        } else {
+            newPost.post = data
+            event.raise('addNewPost', newPost);
+            request.post({
+                    url: host + 'sendMessage',
+                    form: {
+                        chat_id: chat_id,
+                        text: 'success add post',
+                    }
+                },
+                function(err, response, body) {
+                })
+            }
+        }
+    }
+    newPost = null;
+    interceptorHandler = null;
+}
+
 function setShareButtons(buttons) {
     var shareBut = ''
     if (buttons && buttons.length) {
@@ -285,7 +321,10 @@ function processResponse(data, host) {
     if (lastCommand && lastCommand.update_id) {
         updateId = lastCommand.update_id + 1;
     }
-
+    if(interceptorHandler && lastCommand){
+        interceptorHandler(host, lastCommand.message);
+        return;
+    }
     if (lastCommand &&
         lastCommand.message &&
         lastCommand.message.from &&

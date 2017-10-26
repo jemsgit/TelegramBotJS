@@ -13,6 +13,7 @@ function Scheduler(settings) {
         this.telegramRequestManager = new TelegramRequstManager(settings.telegramSettings);
     }
     this.jobs = {};
+    this.customJobs = {};
 }
 
 Scheduler.prototype.vkReuqestManager = null;
@@ -24,6 +25,25 @@ Scheduler.prototype.jobs = null;
 Scheduler.prototype.parseTimeToCron = function(timeString, periodic) {
     var time = timeString.split(':');
     return '12 ' + time[1] + ' ' + time[0] + ' * * ' + periodic
+}
+
+Scheduler.prototype.addPost = function(params){
+    if(!params){
+        return;
+    }
+    var posts = this.customJobs[params.channelId],
+        timeParts = params.time.trim().split(':'),
+        time,
+        that = this;
+    if(!posts){
+        this.customJobs[params.channelId] = {};
+        posts = this.customJobs[params.channelId];
+    }
+    time = new Date(timeParts[0], timeParts[1], timeParts[2], timeParts[3], timeParts[4], 0);
+    var task = schedule.scheduleJob(time, function() {
+        var request = that.telegramRequestManager.postData(params.channelId, params.post, 'links')
+    })
+    posts[time] = task;
 }
 
 Scheduler.prototype.setPublicsPostTimer = function(publicsSettings) {
@@ -145,6 +165,12 @@ Scheduler.prototype.removeLastPostTelegram = function(channelId, chat_id, host) 
 
 Scheduler.prototype.getChannelsTimes = function(channelId, chat_id, host) {
     var tasks = this.jobs[channelId];
+    console.log(tasks);
+    this.telegramRequestManager.botReply(host, chat_id, JSON.stringify(tasks))
+}
+
+Scheduler.prototype.getChannelsCutoms = function(channelId, chat_id, host) {
+    var tasks = this.customJobs[channelId];
     console.log(tasks);
     this.telegramRequestManager.botReply(host, chat_id, JSON.stringify(tasks))
 }
