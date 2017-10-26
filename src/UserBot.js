@@ -112,6 +112,11 @@ var adminId = '123',
                 host: host
             });
         },
+        forcepost: function(host, chat_id, channelId) {
+            events.raise('forcePost', {
+                channelId: channelId
+            });
+        },
         getchannelstimes: function(host, chat_id, channelId) {
             events.raise('getChannelsTimes', {
                 channelId: channelId,
