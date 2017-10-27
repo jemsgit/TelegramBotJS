@@ -28,7 +28,7 @@ PosterBot.prototype.attachEvents = function() {
     });
     events.on('getChannelsTimes', function(params) {
         console.log('getChannelsTimes')
-        that.scheduler.getChannelsTimes('@testChannelJem', params.chat_id, params.host)
+        that.scheduler.getChannelsTimes(params.channelId, params.chat_id, params.host)
     });
     events.on('forcePost', function(params) {
         var channelId = params.channelId.trim();
@@ -42,6 +42,12 @@ PosterBot.prototype.attachEvents = function() {
     });
     events.on('addpost', function(params) {
         this.scheduler.addPost(params)
+    });
+    events.on('viewContent', function(params) {
+        
+    });
+    events.on('deleteContent', function(params) {
+        
     })
 }
 

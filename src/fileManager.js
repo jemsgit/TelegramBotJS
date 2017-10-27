@@ -38,6 +38,39 @@ FileManager.prototype.readDataFromFile = function(path){
      return result;
  }
 
+ FileManager.prototype.viewContent = function(filePath, count, offset){
+     var result = this.readDataFromFile(filePath);
+     if(result){
+         var lines = result.split('\r\n'),
+             result = lines.slice(offset,count).join('\r\n');
+     }
+     return result;
+ }
+
+FileManager.prototype.deleteContentItems = function(filePath, contents){
+     var result = this.readDataFromFile(filePath);
+     if(result && contents.length){
+         var lines = result.split('\r\n'),
+            contentArray = [];
+         contents.forEach(function(content){
+             var currentLine = _.find(lines, function(line) { return line && line.indexOf(content) > -1 });
+             if(currentLine){
+                 contentArray.push(currentLine);
+             }
+         })
+         
+         if(contentArray.length){
+            lines = without(lines, contentArray)
+            fs.writeFileSync(filePath, lines.join('\r\n'));
+            result = true;
+         } else {
+             result = false;
+         }
+         
+     }
+
+     return result;
+ }
 
 
  FileManager.prototype.getOldTitlesFromFile = function(filePath){

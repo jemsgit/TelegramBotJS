@@ -135,6 +135,56 @@ var adminId = '123',
             }
             interceptorHandler = getPost;
         },
+        viewcontent: function(host, chat_id, textParams){
+            if(textParams){
+                var params = textParams.split(' '),
+                    channelId = params[0],
+                    count = params[1],
+                    offset = params[2] || 0,
+                    callback = function(result){
+                        request.post({
+                            url: host + 'sendMessage',
+                            form: {
+                                chat_id: chat_id,
+                                text: result
+                            }
+                        },
+                        function(err, response, body) {
+                                console.log(body);
+                            })
+                        };
+                events.raise('viewContent', {
+                    channelId: channelId,
+                    count: count,
+                    offset: offset,
+                    callback: callback
+                });  
+            }
+        },
+        deletecontent: function(host, chat_id, textParams){
+             if(textParams){
+                var params = textParams.split(' '),
+                    channelId = params[0],
+                    content = params.slice(1)
+                    callback = function(result){
+                        request.post({
+                            url: host + 'sendMessage',
+                            form: {
+                                chat_id: chat_id,
+                                text: result
+                            }
+                        },
+                        function(err, response, body) {
+                                console.log(body);
+                            })
+                        };
+                events.raise('deleteContent', {
+                    channelId: channelId,
+                    content: content,
+                    callback: callback
+                });  
+            }
+        },
         fakeVote: function(host, chat_id, textParams, queryId){
             if(!textParams){
                 return;

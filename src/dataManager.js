@@ -13,18 +13,19 @@ function DataManager(params){
     if(params.dbType === 'db'){
         console.log('db')
     }
+    this.settings = params.settings;
+	this.publics = params.publics;
+	this.contentStealer = params.contentStealer;
+	this.channels = params.channels;
+
     this.attachEvents();
 }
 
-DataManager.prototype.getCommonSettings = function(params){
-    if(!params){
-        return null;
-    }
-
-    var settings = fileManager.getSettings(params.settingFile),
-        publics = fileManager.getSettings(params.publicsFile),
-        contentStealer = fileManager.getSettings(params.contentStealerFile),
-        channels = fileManager.getSettings(params.channelsFile);
+DataManager.prototype.getCommonSettings = function(){
+    var settings = fileManager.getSettings(this.settings),
+        publics = fileManager.getSettings(this.publics),
+        contentStealer = fileManager.getSettings(this.contentStealer),
+        channels = fileManager.getSettings(this.channels);
 
     return {
 		settings: settings,
@@ -37,15 +38,41 @@ DataManager.prototype.getCommonSettings = function(params){
 DataManager.prototype.db = null;
 
 DataManager.prototype.attachEvents = function() {
-    var that = this;
+    var that = this,
+    settings = this.getCommonSettings()
     events.on('vote', function(params) {
         console.log(params)
-        that.db.vote(params)
+        that.vote(params)
+    });
+    events.on('viewContent', function(params) {
+        console.log(params)
+        var settings = settings.channelsList[params.channelId];
+        var result = that.viewContent(settings.filePath, params.count, params.offset);
+        if(params.callback){
+            params.callback(result);
+        }
+    });
+    events.on('deleteContent', function(params) {
+        console.log(params)
+        var settings = settings.channelsList[params.channelId];
+        that.deleteContentItems(settings.filePath, params.content)
     });
 }
 
 DataManager.prototype.getVotes = function(params) {
     return this.db.getVoteResults(params)
+}
+
+DataManager.prototype.vote = function(params) {
+    return this.db.vote(params)
+}
+
+DataManager.prototype.viewContent = function(filePath, count, offset) {
+    return this.db.viewContent(filePath, count, offset)
+}
+
+DataManager.prototype.deleteContentItems = function(filePath, content) {
+    return this.db.deleteContentItems(filePath, content)
 }
 
 module.exports = DataManager;

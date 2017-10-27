@@ -4,18 +4,16 @@ var dataManager = require('./dataManager'),
 
 
 var db = new dataManager({
-			dbType: 'files'
+			dbType: 'files',
+			settings : './settings/settings.json',
+			publics: './settings/vkpublic.json',
+			contentStealer : './settings/contentStealer.json',
+			channels : './settings/telegramchannel.json'
 		})
 
 if(db){
-	var commonSettings = db.getCommonSettings({
-			settingFile : './settings/settings.json',
-			publicsFile : './settings/vkpublic.json',
-			contentStealerFile : './settings/contentStealer.json',
-			channelsFile : './settings/telegramchannel.json'
-		});
+	var commonSettings = db.getCommonSettings();
 
-	
 	if(!commonSettings){
 		return;
 	}
