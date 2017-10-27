@@ -147,9 +147,10 @@ var adminId = '123',
             var channelName = textParams[0],
                 postId = textParams[1],
                 userId = textParams[2],
-                data = textParams[3];
+                data = textParams[3],
+                count = textParams[4]
                 //@test_channel 1022 % like
-            var result = voteService.voteUser(userId, channelName, postId, data, true);
+            var result = voteService.voteUser(userId, channelName, postId, data, true, count);
             if(result){
                 request.post({
                     url: host + 'sendMessage',

@@ -47,7 +47,7 @@ function getVotesCounts(votes) {
     return results;
 }
 
-function voteUser(user_Id, channel_id, post_id, voice, isFake) {
+function voteUser(user_Id, channel_id, post_id, voice, isFake, count) {
     var votes = getChannelPostResults(channel_id, post_id),
         voices = votes[voice],
         message,
@@ -66,7 +66,13 @@ function voteUser(user_Id, channel_id, post_id, voice, isFake) {
         votes[voice] = voices;
     }
     if(isFake){
-        addUserVoice(voices, user_Id);
+        if(count){
+            for(var i = 0; i < count; i++){
+                addUserVoice(voices, user_Id);
+            }
+        } else {
+            addUserVoice(voices, user_Id);
+        }
         events.raise('vote', {channel_id: channel_id, post_id: post_id, result: votes})
         return true;
     }
