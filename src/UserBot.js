@@ -130,8 +130,8 @@ var adminId = '123',
             textParams = textParams.trim();
             var params = textParams.split(' ');
             newPost = {
-                channelId = params[0],
-                time = params[1]
+                channelId: params[0],
+                time: params[1]
             }
             interceptorHandler = getPost;
         },
@@ -197,16 +197,16 @@ var adminId = '123',
             var channelName = textParams[0],
                 postId = textParams[1],
                 userId = textParams[2],
-                data = textParams[3];
+                data = textParams[3],
+                count = textParams[4]
                 //@test_channel 1022 % like
-            var result = voteService.voteUser(userId, channelName, postId, data, true);
+            var result = voteService.voteUser(userId, channelName, postId, data, true, count);
             if(result){
                 request.post({
                     url: host + 'sendMessage',
                     form: {
                         chat_id: chat_id,
-                        text: 'success vote',
-                        reply_markup: JSON.stringify(keyboard)
+                        text: 'success vote'
                     }
                 },
                 function(err, response, body) {
@@ -320,7 +320,7 @@ function getPost(host, data) {
             newPost = null
         } else {
             newPost.post = data
-            event.raise('addNewPost', newPost);
+            events.raise('addNewPost', newPost);
             request.post({
                     url: host + 'sendMessage',
                     form: {
@@ -332,7 +332,7 @@ function getPost(host, data) {
                 })
             }
         }
-    }
+
     newPost = null;
     interceptorHandler = null;
 }
