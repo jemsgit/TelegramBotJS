@@ -127,17 +127,29 @@ var adminId = '123',
             });
         },
         addpost: function(host, chat_id, textParams){
-            textParams = textParams.trim();
-            var params = textParams.split(' ');
-            newPost = {
-                channelId: params[0],
-                time: params[1]
+            var params = textParams.trim().split(' ');
+            if(params.length > 1){
+                newPost = {
+                    channelId: params[0],
+                    time: params[1]
+                }
+                request.post({
+                    url: host + 'sendMessage',
+                    form: {
+                        chat_id: chat_id,
+                        text: 'Add ur text',
+                    }
+                },
+                function(err, response, body) {
+                })
+                interceptorHandler = getPost;
             }
-            interceptorHandler = getPost;
+            
         },
         viewcontent: function(host, chat_id, textParams){
             if(textParams){
-                var params = textParams.split(' '),
+                console.log()
+                var params = textParams.trim().split(' '),
                     channelId = params[0],
                     count = params[1],
                     offset = params[2] || 0,
@@ -163,6 +175,7 @@ var adminId = '123',
         },
         deletecontent: function(host, chat_id, textParams){
              if(textParams){
+                textParams = textParams.trim();
                 var params = textParams.split(' '),
                     channelId = params[0],
                     content = params.slice(1)
@@ -314,6 +327,7 @@ function getShareButtons(text) {
 
 function getPost(host, data) {
     if(data && data.text){
+        console.log(data.text)
         var chat_id = data.chat.id;
         data = data.text
         if(data === 'cancel'){

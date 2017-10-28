@@ -41,8 +41,11 @@ FileManager.prototype.readDataFromFile = function(path){
  FileManager.prototype.viewContent = function(filePath, count, offset){
      var result = this.readDataFromFile(filePath);
      if(result){
-         var lines = result.split('\r\n'),
-             result = lines.slice(offset,count).join('\r\n');
+         count = parseInt(count) + parseInt(offset);
+         if(count === count){
+             var lines = result.split('\r\n'),
+             result = lines.slice(offset,count).join('\r\n \r\n');
+         }  
      }
      return result;
  }
@@ -60,11 +63,13 @@ FileManager.prototype.deleteContentItems = function(filePath, contents){
          })
          
          if(contentArray.length){
-            lines = without(lines, contentArray)
+            var prevCount = lines.length;
+            var without = _.without.bind(_, lines)
+            lines = without.apply(_, contentArray);
             fs.writeFileSync(filePath, lines.join('\r\n'));
-            result = true;
+            result = prevCount !== lines.length;
          } else {
-             result = false;
+            result = false;
          }
          
      }

@@ -40,11 +40,8 @@ PosterBot.prototype.attachEvents = function() {
         var postFnc = that.scheduler.getPostFunction(channelId, settings);
         postFnc();
     });
-    events.on('addpost', function(params) {
-        this.scheduler.addPost(params)
-    });
-    events.on('viewContent', function(params) {
-        
+    events.on('addNewPost', function(params) {
+        that.scheduler.addPost(params)
     });
     events.on('deleteContent', function(params) {
         

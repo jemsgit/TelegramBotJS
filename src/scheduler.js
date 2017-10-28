@@ -34,14 +34,21 @@ Scheduler.prototype.addPost = function(params){
     var posts = this.customJobs[params.channelId],
         timeParts = params.time.trim().split(':'),
         time,
+        newData = dataParser.parsePostString(params.post, 'links');
         that = this;
+    console.log(timeParts);
     if(!posts){
         this.customJobs[params.channelId] = {};
         posts = this.customJobs[params.channelId];
     }
-    time = new Date(timeParts[0], timeParts[1], timeParts[2], timeParts[3], timeParts[4], 0);
+    var month = timeParts[1] - 1;
+    if(month !== month || month < 0){
+        return;
+    }
+    time = new Date(timeParts[0], month, timeParts[2], timeParts[3], timeParts[4], 0);
+    console.log(time);
     var task = schedule.scheduleJob(time, function() {
-        var request = that.telegramRequestManager.postData(params.channelId, params.post, 'links')
+        var request = that.telegramRequestManager.postData(params.channelId, newData, 'links')
     })
     posts[time] = task;
 }

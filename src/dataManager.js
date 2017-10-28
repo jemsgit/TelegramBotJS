@@ -39,23 +39,23 @@ DataManager.prototype.db = null;
 
 DataManager.prototype.attachEvents = function() {
     var that = this,
-    settings = this.getCommonSettings()
+        settings = this.getCommonSettings()
     events.on('vote', function(params) {
-        console.log(params)
         that.vote(params)
     });
     events.on('viewContent', function(params) {
-        console.log(params)
-        var settings = settings.channelsList[params.channelId];
-        var result = that.viewContent(settings.filePath, params.count, params.offset);
+        var currentSettings = settings.channelsList[params.channelId],
+            result = that.viewContent(currentSettings.filePath, params.count, params.offset);
         if(params.callback){
             params.callback(result);
         }
     });
     events.on('deleteContent', function(params) {
-        console.log(params)
-        var settings = settings.channelsList[params.channelId];
-        that.deleteContentItems(settings.filePath, params.content)
+        var currentSettings = settings.channelsList[params.channelId],
+            result = that.deleteContentItems(currentSettings.filePath, params.content);
+        if(params.callback){
+            params.callback(result);
+        }
     });
 }
 
