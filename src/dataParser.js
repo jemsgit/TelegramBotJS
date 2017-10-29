@@ -39,33 +39,31 @@ module.exports = {
 		return newPosts;
 	},
 	parseNewContent: function(body, targetSelector, lastElement, saveLastPointText){
+		var $body = $(body),
+			items = $body.find(":not(iframe)").contents().filter(function() {
+				return this.nodeType == 3 && this.wholeText.indexOf("•") > -1 ;
+			}),
+			arr = [];
 
-        var $body = $(body),
-            $a = $body.find('a'),
-            arr = [],
-            resultArr = [],
-            lastEl = $body.find(lastElement);
-        if (!lastEl.length) {
-            var links = $body.find('.content a');
-            for (var i = 0; i < links.length; i++) {
-                if ($(links[i]).text().indexOf(saveLastPointText) > -1) {
-                    lastEl = $(links[i]);
-                    break;
-                }
-            }
-        }
+		items.each(function(index, item){
+			var result = {};
+			result.text = ''
+			var next = item.nextSibling
+			var i = 0;
+			while((next && next.nodeName !== 'BR') && i < 7){ //i is for safety
+				if(next.nodeName === "A"){
+					result.link = next.href;
+					result.text += ' ' + next.textContent;
+				} else if(next.nodeName === '#text'){
+					result.text += ' ' + next.textContent;
+				}
+				next = next.nextSibling;
+				i++;
+			}
+			result.text = result.text.trim();
+			arr.push(result);
+		})
 
-        var lastIndex = $a.index(lastEl);
-
-        $body.find(targetSelector).each(function() {
-            var elementOffset = $(this);
-            if ($a.index(elementOffset) < lastIndex) {
-                arr.push({
-                    link: $(this).attr('href'),
-                    text: $(this).text()
-                })
-            }
-        });
 
         for (var i = 0; i < arr.length; i++) {
             resultArr.push(arr[i].link + ' ' + arr[i].text)

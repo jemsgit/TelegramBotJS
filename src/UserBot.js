@@ -385,15 +385,16 @@ function processResponse(data, host) {
     if (lastCommand && lastCommand.update_id) {
         updateId = lastCommand.update_id + 1;
     }
-    if(interceptorHandler && lastCommand){
-        interceptorHandler(host, lastCommand.message);
-        return;
-    }
+    
     if (lastCommand &&
         lastCommand.message &&
         lastCommand.message.from &&
         lastCommand.message.from.username === adminId) {
 
+        if(interceptorHandler){
+            interceptorHandler(host, lastCommand.message);
+            return;
+        }
         var text = lastCommand.message.text.trim();
         var chat_id = lastCommand.message.chat.id;
         if (text.charAt(0) === '/') {
