@@ -43,7 +43,8 @@ module.exports = {
 			items = $body.find(":not(iframe)").contents().filter(function() {
 				return this.nodeType == 3 && this.wholeText.indexOf("•") > -1 ;
 			}),
-			arr = [];
+			arr = [],
+			resultArr = [];
 
 		items.each(function(index, item){
 			var result = {};

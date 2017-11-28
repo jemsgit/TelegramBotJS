@@ -53,13 +53,6 @@ function voteUser(user_Id, channel_id, post_id, voice, isFake, count) {
         message,
         counts,
         result;
-    console.log('-------Votes 1-----')
-    console.log(posts[channel_id])
-    console.log('-----------------')
-
-    console.log('-------Voices 1-----')
-    console.log(voices)
-    console.log('-----------------')
 
     if (!voices) {
         voices = []
@@ -83,14 +76,7 @@ function voteUser(user_Id, channel_id, post_id, voice, isFake, count) {
     } else {
         deleteVoiceFromOtherGroup(votes, user_Id);
         addUserVoice(voices, user_Id);
-        events.raise('vote', {channel_id: channel_id, post_id: post_id, result: votes})
-        console.log('-------Votes 2-----')
-        console.log(posts[channel_id])
-        console.log('-----------------')
-
-        console.log('-------Voices 2-----')
-        console.log(voices)
-        console.log('-----------------')
+        events.raise('vote', {channel_id: channel_id, post_id: post_id, result: votes});
         message = 'Ваш голос учтен';
         counts = getVotesCounts(votes);
         result = true;
@@ -113,9 +99,5 @@ function setVotes(votes){
 
 service.voteUser = voteUser;
 service.setVotes = setVotes;
-
-function getResultsFromDB(){
-    fileManager.getVoteResults()
-}
 
 module.exports = service;

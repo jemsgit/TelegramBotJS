@@ -12,7 +12,6 @@ function TelegramRequestManager(settings) {
     this.headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/534.30 (KHTML, like Gecko) Ubuntu/11.04 Chromium/12.0.742.112 Chrome/12.0.742.112 Safari/534.30"
     }
-    this.youtube_check_url = 'https://www.youtube.com/oembed';
     this.googleUrl = new GoogleURL({
         key: settings.googleApiKey
     });
@@ -41,6 +40,33 @@ TelegramRequestManager.prototype.updateMessage = function(prop) {
         form: prop
     }, function(err, response, body) {
     });
+}
+
+TelegramRequestManager.prototype.answerCallbackQuery = function(host, queryId, message) {
+     request.post({
+          url: host + 'answerCallbackQuery',
+          form:{
+               callback_query_id: queryId,
+               text: message
+         }
+       }, function(err, response, body) {
+             if(!err){
+         }
+     });
+}
+
+TelegramRequestManager.prototype.editMessageReplyMarkup = function(host, channelId, postId, keyboard) {
+    request.post({
+          url: host + 'editMessageReplyMarkup',
+          form: {
+                chat_id: channelId,
+                message_id: postId,
+                reply_markup: JSON.stringify(keyboard)
+          }
+         },
+         function(err, response, body) {
+
+    })
 }
 
 TelegramRequestManager.prototype.postData = function(channel_id, data, type) {

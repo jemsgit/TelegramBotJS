@@ -1,24 +1,17 @@
 var schedule = require('node-schedule'),
-    TelegramRequstManager = require('./TelegramRequestManager'),
-    VkRequestManager = require('./VkRequestManager'),
     fileManager = require('./fileManager'),
-    dataParser = require('./dataParser');
+    dataParser = require('./dataParser'),
+    constants = require('./constants');
 
-function Scheduler(settings) {
+function Scheduler(settings, mediator) {
+    if(!mediator){
+        throw new Error('No mediator was provided!')
+    }
 
-    if (settings.vkSettings) {
-        this.vkReuqestManager = new VkRequestManager(settings.vkSettings);
-    }
-    if (settings.telegramSettings) {
-        this.telegramRequestManager = new TelegramRequstManager(settings.telegramSettings);
-    }
+    this.mediator = mediator;
     this.jobs = {};
     this.customJobs = {};
 }
-
-Scheduler.prototype.vkReuqestManager = null;
-
-Scheduler.prototype.telegramRequestManager = null;
 
 Scheduler.prototype.jobs = null;
 
@@ -48,9 +41,17 @@ Scheduler.prototype.addPost = function(params){
     time = new Date(timeParts[0], month, timeParts[2], timeParts[3], timeParts[4], 0);
     console.log(time);
     var task = schedule.scheduleJob(time, function() {
-        var request = that.telegramRequestManager.postData(params.channelId, newData, 'links')
+        var request = that.mediator.postTelegramData(params.channelId, newData, 'links')
     })
     posts[time] = task;
+}
+
+Scheduler.prototype.setPostTimer = function(type, params){
+    if(type === constants.vk){
+        this.setPublicsPostTimer(params);
+    } else {
+        this.setTelegramPostTimer(params);
+    }
 }
 
 Scheduler.prototype.setPublicsPostTimer = function(publicsSettings) {
@@ -63,12 +64,13 @@ Scheduler.prototype.setPublicsPostTimer = function(publicsSettings) {
             var time = this.parseTimeToCron(settings.times[i], '0-6');
             console.log('---', settings.times[i])
             var task = schedule.scheduleJob(time, function() {
-                var postData = fileManager.readStringFromFile(settings.filePath),
+                var postData = that.mediator.getDataFromDB(settings.filePath),
                     requestData;
                 if (postData) {
                     requestData = dataParser.parsePostString(postData, settings.type);
                     if (requestData) {
-                        that.vkReuqestManager.postData(requestData, settings.publicId);
+                        that.mediator.postVkData(requestData, settings.publicId);
+                        
                     }
                 }
 
@@ -81,45 +83,15 @@ Scheduler.prototype.setPublicsPostTimer = function(publicsSettings) {
 
 Scheduler.prototype.setContentStealerTimer = function(settings) {
     var that = this;
-    if (settings.times && settings.link) {
-
+    if (settings.times && settings.modulePath) {
+        var graberModule = require('../' + settings.modulePath)(settings, that.mediator);
+        console.log(graberModule);
+        
         var process = function() {
-            var request = that.vkReuqestManager.getTitleLinks(settings.link);
-
-            request.then(function(data) {
-                console.log('REQUEST')
-                var oldTitles = fileManager.getOldTitlesFromFile(settings.resultFile);
-                var newPosts = dataParser.parseTitles(data, oldTitles, settings.link.q);
-                fileManager.addNewArrayDataFile(newPosts, settings.resultFile);
-
-                if (newPosts.length) {
-                    var contetnRequest = that.vkReuqestManager.getNewContent(newPosts);
-                    console.log(contetnRequest)
-                    contetnRequest.then(function(data) {
-                        var resultData = [];
-                        console.log('new Data')
-                        for (var i = 0; i < data.length; i++) {
-                            var result = dataParser.parseNewContent(data[i], settings.link.targetSelector, settings.link.lastElement, settings.link.saveLastPoint);
-                            resultData = resultData.concat(result);
-                        }
-                        if (!Array.isArray(settings.filePath)) {
-                            settings.filePath = [settings.filePath];
-                        }
-                        for (var i = 0; i < settings.filePath.length; i++) {
-                            if (i > 0) {
-                                resultData = dataParser.shuffleArray(resultData);
-                            }
-                            fileManager.addNewArrayDataFile(resultData, settings.filePath[i])
-                        }
-
-                    }, function(error) {
-                        console.error(error);
-                    })
-                }
-            }, function(error) {
-                console.error(error);
-            })
+            console.log('prosc')
+            graberModule.getContent();
         }
+
         var task = schedule.scheduleJob(settings.times, process);
         this.jobs['contentStealer'] = [task];
     }
@@ -129,12 +101,10 @@ Scheduler.prototype.setContentStealerTimer = function(settings) {
 Scheduler.prototype.getPostFunction = function(key, settings) {
     var that = this;
     return function() {
-        var data = fileManager.readStringFromFile(settings.filePath);
-        console.log(data);
-
+        var data = that.mediator.getDataFromDB(settings.filePath);
         if (data) {
             var newData = dataParser.parsePostString(data, settings.type);
-            var request = that.telegramRequestManager.postData(key, newData, settings.type)
+            var request = that.mediator.postTelegramData(key, newData, settings.type)
         }
 
     }
@@ -157,29 +127,32 @@ Scheduler.prototype.setTelegramPostTimer = function(channelsList) {
 
 };
 
-Scheduler.prototype.removeLastPostTelegram = function(channelId, chat_id, host) {
-    var tasks = this.jobs[channelId];
-    var keys = Object.keys(tasks);
-    var lastKey = keys[keys.length - 1];
-    var task = keys[lastKey];
-    var result = 'Не успешно'
-    if (task && task.cancelNext) {
-        task.cancelNext(true);
-        result = 'Успешно';
+Scheduler.prototype.removeLastPost = function(params) {
+    if(params && params.type === constants.telegram){
+        var tasks = this.jobs[params.channelId];
+        var keys = Object.keys(tasks);
+        var lastKey = keys[keys.length - 1];
+        var task = keys[lastKey];
+        var result = 'Не успешно'
+        if (task && task.cancelNext) {
+            task.cancelNext(true);
+            result = 'Успешно';
+        }
+        this.mediator.telegramBotReply(params.host, params.chat_id, result);
     }
-    this.telegramRequestManager.botReply(host, chat_id, result)
+    
 }
 
 Scheduler.prototype.getChannelsTimes = function(channelId, chat_id, host) {
     var tasks = this.jobs[channelId];
     console.log(tasks);
-    this.telegramRequestManager.botReply(host, chat_id, JSON.stringify(tasks))
+    this.mediator.telegramBotReply(host, chat_id, JSON.stringify(tasks));
 }
 
 Scheduler.prototype.getChannelsCutoms = function(channelId, chat_id, host) {
     var tasks = this.customJobs[channelId];
     console.log(tasks);
-    this.telegramRequestManager.botReply(host, chat_id, JSON.stringify(tasks))
+    this.mediator.telegramBotReply(host, chat_id, JSON.stringify(tasks))
 }
 
 Scheduler.prototype.listJobsCount = function() {

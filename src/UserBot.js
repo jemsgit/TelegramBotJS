@@ -1,126 +1,73 @@
 var request = require('request'),
     events = require('./events'),
-    voteService = require('./voteService');;
+    constants = require('./constants'),
+    voteService = require('./voteService');
 
-var adminId = '123',
-    timer,
-    updateId = 0,
-    newPost,
-    interceptorHandler,
-    handlers = {
-        echo: function(host, chat_id, text) {
-            text = text || 'hello';
-            request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: text
-                    }
-                },
-                function(err, response, body) {
-                    console.log(err);
-                })
-        },
-        hello: function(host, chat_id, text) {
-            events.raise('hello', {
-                chat_id: chat_id,
-                host: host,
-                text: text
-            });
-            let keyboard = {
-                keyboard: [
-                    [{
-                            text: '123'
-                        },
-                        {
-                            text: '456'
-                        }
-                    ]
-                ],
-                one_time_keyboard: true
-            }
-            request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: 'hello test',
-                        reply_markup: JSON.stringify(keyboard)
-                    }
-                },
-                function(err, response, body) {
-                    console.log(body);
-                })
+function UserBot(settings, mediator) {
+    if (settings && settings.token) {
+        this.token = settings.token;
+        this.time = 1500;
+        this.host = "https://api.telegram.org/bot" + this.token + "/";
+        this.adminId = settings.adminId;
+        this.mediator = mediator;
+        this.setHandlers();
+        this.updateUserVotes();
+    }
+
+}
+
+UserBot.prototype.updateId = 0;
+
+UserBot.prototype.timer = null;
+
+UserBot.prototype.newPost = null;
+
+UserBot.prototype.interceptorHandler = null;
+
+UserBot.prototype.updateUserVotes = function(){
+    var votes = this.mediator.getUserVotes();
+    voteService.setVotes(votes);
+}
+
+UserBot.prototype.startBot = function() {
+    var checkFunc = this.getMessageChecker(this.host, this.adminId);
+    this.timer = setInterval(checkFunc, this.time);
+}
+
+UserBot.prototype.stopBot = function() {
+    if (this.timer) {
+        clearInterval(this.timer);
+    }
+}
+
+UserBot.prototype.handlers = null;
+
+UserBot.prototype.setHandlers = function(){
+    var that = this;
+
+    this.handlers = {
+        hel: function(){
+            console.log(that.token);
         },
         test: function(host, chat_id, text) {
-            events.raise('hello', {
-                chat_id: chat_id,
-                host: host,
-                text: text
-            });
-            var shareButtonsClean = [{
-                    text: '📢Vk',
-                    url: 'https://goo.gl/4k1Sf2'
-                },
-                {
-                    text: '📢Fb',
-                    url: 'https://goo.gl/4k1Sf2'
-                }
-            ]
-            shareButtons = setShareButtons(shareButtonsClean);
-            console.log(shareButtons)
-            var like = {
-                val: 'like',
-                t: 'vote',
-                sb: shareButtons
-            };
-            var dislike = {
-                val: 'dislike',
-                t: 'vote',
-                sb: shareButtons
-            }
-
-            let keyboard = {
-                inline_keyboard: [
-                    [
-                        {
-                            text: "👍 0",
-                            callback_data: JSON.stringify(like)
-                        }, {
-                            text: "😕 0",
-                            callback_data: JSON.stringify(dislike)
-                        },
-                        shareButtonsClean[1], shareButtonsClean[0]
-                    ]
-                ],
-                one_time_keyboard: true
-            }
-
-            request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: '123',
-                        reply_markup: JSON.stringify(keyboard)
-                    }
-                },
-                function(err, response, body) {
-                    console.log(body);
-                })
+            text = text || '123';
+            that.mediator.telegramBotReply(host, chat_id, text);
         },
         removeLast: function(host, chat_id, channelId) {
-            events.raise('removeLast', {
+            that.mediator.removeLastPost({
                 channelId: channelId,
                 chat_id: chat_id,
-                host: host
+                host: host,
+                type: constants.telegram
             });
         },
         forcepost: function(host, chat_id, channelId) {
-            events.raise('forcePost', {
+            that.mediator.forcePost({
                 channelId: channelId
             });
         },
         getchannelstimes: function(host, chat_id, channelId) {
-            events.raise('getChannelsTimes', {
+            that.mediator.getChannelsTimes({
                 channelId: channelId,
                 chat_id: chat_id,
                 host: host
@@ -129,20 +76,13 @@ var adminId = '123',
         addpost: function(host, chat_id, textParams){
             var params = textParams.trim().split(' ');
             if(params.length > 1){
-                newPost = {
+                that.newPost = {
                     channelId: params[0],
                     time: params[1]
                 }
-                request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: 'Add ur text',
-                    }
-                },
-                function(err, response, body) {
-                })
-                interceptorHandler = getPost;
+
+                that.mediator.telegramBotReply(host, chat_id, 'Add ur text');
+                that.interceptorHandler = getPost;
             }
             
         },
@@ -154,18 +94,9 @@ var adminId = '123',
                     count = params[1],
                     offset = params[2] || 0,
                     callback = function(result){
-                        request.post({
-                            url: host + 'sendMessage',
-                            form: {
-                                chat_id: chat_id,
-                                text: result
-                            }
-                        },
-                        function(err, response, body) {
-                                console.log(body);
-                            })
-                        };
-                events.raise('viewContent', {
+                        that.mediator.telegramBotReply(host, chat_id, result);
+                    }
+                that.mediator.viewContent({
                     channelId: channelId,
                     count: count,
                     offset: offset,
@@ -180,18 +111,9 @@ var adminId = '123',
                     channelId = params[0],
                     content = params.slice(1)
                     callback = function(result){
-                        request.post({
-                            url: host + 'sendMessage',
-                            form: {
-                                chat_id: chat_id,
-                                text: result
-                            }
-                        },
-                        function(err, response, body) {
-                                console.log(body);
-                            })
-                        };
-                events.raise('deleteContent', {
+                        that.mediator.telegramBotReply(host, chat_id, result);
+                    };
+                that.mediator.deleteContent({
                     channelId: channelId,
                     content: content,
                     callback: callback
@@ -215,16 +137,7 @@ var adminId = '123',
                 //@test_channel 1022 % like
             var result = voteService.voteUser(userId, channelName, postId, data, true, count);
             if(result){
-                request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: 'success vote'
-                    }
-                },
-                function(err, response, body) {
-                    console.log(body);
-                })
+                that.mediator.telegramBotReply(host, chat_id, 'success vote');
             }
         },
         voteHandler: function(queryId, userId, channelId, channelName, postId, text, data, sb, host) {
@@ -276,28 +189,8 @@ var adminId = '123',
                         ],
                         one_time_keyboard: true
                     }
-                    request.post({
-                            url: host + 'answerCallbackQuery',
-                            form:{
-                                callback_query_id: queryId,
-                                text: result.message
-                            }
-                    }, function(err, response, body) {
-                        if(!err){
-
-                        }
-                    });
-                    request.post({
-                        url: host + 'editMessageReplyMarkup',
-                        form: {
-                            chat_id: channelId,
-                            message_id: postId,
-                            reply_markup: JSON.stringify(keyboard)
-                        }
-                    },
-                    function(err, response, body) {
-
-                    })
+                    that.mediator.answerCallbackQuery(host, queryId, result.message);
+                    that.mediator.editMessageReplyMarkup(host, channelId, postId, keyboard);
                 }
             }
         },
@@ -305,6 +198,8 @@ var adminId = '123',
             console.log(queryId)
         }
     }
+}
+
 
 function getShareButtons(text) {
     var buttons = [];
@@ -325,33 +220,25 @@ function getShareButtons(text) {
     return buttons;
 }
 
-function getPost(host, data) {
+UserBot.prototype.getPost = function(host, data) {
     if(data && data.text){
         console.log(data.text)
         var chat_id = data.chat.id;
         data = data.text
         if(data === 'cancel'){
-            newPost = null
+            this.newPost = null
         } else {
-            newPost.post = data
-            events.raise('addNewPost', newPost);
-            request.post({
-                    url: host + 'sendMessage',
-                    form: {
-                        chat_id: chat_id,
-                        text: 'success add post',
-                    }
-                },
-                function(err, response, body) {
-                })
+            this.newPost.post = data
+            this.mediator.addPost(ths.newPost)
+            this.mediator.telegramBotReply(host, chat_id, 'success add post')
             }
         }
 
-    newPost = null;
-    interceptorHandler = null;
+    this.newPost = null;
+    this.interceptorHandler = null;
 }
 
-function setShareButtons(buttons) {
+UserBot.prototype.setShareButtons = function(buttons) {
     var shareBut = ''
     if (buttons && buttons.length) {
         buttons.forEach(function(item, i) {
@@ -365,7 +252,7 @@ function setShareButtons(buttons) {
     return shareBut;
 }
 
-function processResponse(data, host) {
+UserBot.prototype.processResponse = function(data, host) {
     if (!data) {
         return;
     }
@@ -383,26 +270,23 @@ function processResponse(data, host) {
 
     var lastCommand = data[data.length - 1];
     if (lastCommand && lastCommand.update_id) {
-        updateId = lastCommand.update_id + 1;
+        this.updateId = lastCommand.update_id + 1;
     }
     
     if (lastCommand &&
         lastCommand.message &&
         lastCommand.message.from &&
-        lastCommand.message.from.username === adminId) {
+        lastCommand.message.from.username === this.adminId) {
 
-        if(interceptorHandler){
-            interceptorHandler(host, lastCommand.message);
+        if(this.interceptorHandler){
+            this.interceptorHandler(host, lastCommand.message);
             return;
         }
         var text = lastCommand.message.text.trim();
         var chat_id = lastCommand.message.chat.id;
         if (text.charAt(0) === '/') {
-            var commandParams = getCommandParams(text);
-            console.log('----Bot message params-----');
-            console.log(commandParams);
-            console.log('---------');
-            var handler = getHandlerByCommand(commandParams.command);
+            var commandParams = this.getCommandParams(text);
+            var handler = this.getHandlerByCommand(commandParams.command);
             handler(host, chat_id, commandParams.text);
         }
     } else if (lastCommand && lastCommand.callback_query) {
@@ -418,20 +302,19 @@ function processResponse(data, host) {
                     data = queryData.val,
                     sb = queryData.sb,
                     text = query.message.text;
-                handlers.voteHandler(query.id, userId, channelId, channelName, postId, text, data, sb, host);
+                this.handlers.voteHandler(query.id, userId, channelId, channelName, postId, text, data, sb, host);
             } else if (queryData.type === 'share') {
                 var url = queryData.url,
                     queryId = query.id,
                     postId = query.message.message_id,
                     channelId = query.message.chat.username;
-                handlers.shareHandler(queryId, url, postId, channelId, host);
+                this.handlers.shareHandler(queryId, url, postId, channelId, host);
             }
         }
     }
-
 }
 
-function getCommandParams(text) {
+UserBot.prototype.getCommandParams = function(text) {
     var commandEnd = text.indexOf(' ');
     var command,
         text;
@@ -448,41 +331,21 @@ function getCommandParams(text) {
     };
 }
 
-function getHandlerByCommand(command) {
-    var handler = handlers[command];
+UserBot.prototype.getHandlerByCommand = function(command) {
+    var handler = this.handlers[command];
     return handler || function() {};
 }
 
-function getMessageChecker(host) {
-    var url = host + 'getUpdates'
+UserBot.prototype.getMessageChecker = function(host) {
+    var url = host + 'getUpdates',
+        that = this;
     return function() {
-        request.get(url + '?offset=' + updateId)
+        request.get(url + '?offset=' + that.updateId)
             .on('response', function(response, data) {
                 response.on("data", function(data) {
-                    processResponse(data, host)
+                    that.processResponse(data, host);
                 });
             })
-    }
-}
-
-function UserBot(settings, votes) {
-    if (settings && settings.token) {
-        this.token = settings.token;
-        this.time = 1500;
-        this.host = "https://api.telegram.org/bot" + this.token + "/";
-        voteService.setVotes(votes);
-    }
-
-}
-
-UserBot.prototype.startBot = function() {
-    var checkFunc = getMessageChecker(this.host);
-    timer = setInterval(checkFunc, this.time);
-}
-
-UserBot.prototype.stopBot = function() {
-    if (timer) {
-        clearInterval(timer);
     }
 }
 

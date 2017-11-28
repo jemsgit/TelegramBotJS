@@ -29,6 +29,7 @@ FileManager.prototype.readDataFromFile = function(path){
 
  FileManager.prototype.readStringFromFile = function(filePath){
      var result = this.readDataFromFile(filePath);
+     console.log('data', result && result.length)
      if(result){
          var lines = result.split('\r\n'),
              result = lines.splice(0,1)[0];
@@ -77,8 +78,12 @@ FileManager.prototype.deleteContentItems = function(filePath, contents){
      return result;
  }
 
+ FileManager.prototype.getDataItem = function(filePath){
+     console.log(filePath)
+     return this.readStringFromFile(filePath)
+ }
 
- FileManager.prototype.getOldTitlesFromFile = function(filePath){
+ FileManager.prototype.getOldTitles = function(filePath){
      var result = this.readDataFromFile(filePath),
          lines = [];
      if(result){
@@ -87,7 +92,7 @@ FileManager.prototype.deleteContentItems = function(filePath, contents){
      return lines;
  }
 
- FileManager.prototype.addNewArrayDataFile = function(newData, filePath){
+ FileManager.prototype.addNewArrayData = function(newData, filePath){
      var result = this.readDataFromFile(filePath);
      if(result){
          var lines = result.split('\r\n');

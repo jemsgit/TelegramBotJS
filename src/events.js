@@ -9,9 +9,9 @@ Events.prototype.on = function(type, fn) {
     this.subscribers[type].push(fn);
 };
 Events.prototype.off = function(fn, type) {
-    this.visitSubscribers('unsubscribe', fn, type);
+    this.visitSubscribers('unsubscribe', type, fn);
 };
-Events.prototype.raise = function(type, data) {
+Events.prototype.raise = function(type, data) {`1`
     this.visitSubscribers('raise', type, data);
 };
 

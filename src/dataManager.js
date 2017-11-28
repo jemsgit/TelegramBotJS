@@ -17,8 +17,7 @@ function DataManager(params){
 	this.publics = params.publics;
 	this.contentStealer = params.contentStealer;
 	this.channels = params.channels;
-
-    this.attachEvents();
+    this.commonSettings = this.getCommonSettings();
 }
 
 DataManager.prototype.getCommonSettings = function(){
@@ -37,26 +36,16 @@ DataManager.prototype.getCommonSettings = function(){
 
 DataManager.prototype.db = null;
 
-DataManager.prototype.attachEvents = function() {
-    var that = this,
-        settings = this.getCommonSettings()
-    events.on('vote', function(params) {
-        that.vote(params)
-    });
-    events.on('viewContent', function(params) {
-        var currentSettings = settings.channelsList[params.channelId],
-            result = that.viewContent(currentSettings.filePath, params.count, params.offset);
+DataManager.prototype.getDataItem = function(path) {
+    return this.db.getDataItem(params)
+}
+
+DataManager.prototype.getContent = function(params) {
+    var currentSettings = this.commonSettings.channelsList[params.channelId],
+            result = this.viewContent(currentSettings.filePath, params.count, params.offset);
         if(params.callback){
             params.callback(result);
         }
-    });
-    events.on('deleteContent', function(params) {
-        var currentSettings = settings.channelsList[params.channelId],
-            result = that.deleteContentItems(currentSettings.filePath, params.content);
-        if(params.callback){
-            params.callback(result);
-        }
-    });
 }
 
 DataManager.prototype.getVotes = function(params) {
@@ -67,12 +56,28 @@ DataManager.prototype.vote = function(params) {
     return this.db.vote(params)
 }
 
+DataManager.prototype.deleteContent = function(params) {
+    var currentSettings = this.commonSettings.channelsList[params.channelId],
+            result = this.deleteContentItems(currentSettings.filePath, params.content);
+        if(params.callback){
+            params.callback(result);
+        }
+}
+
 DataManager.prototype.viewContent = function(filePath, count, offset) {
     return this.db.viewContent(filePath, count, offset)
 }
 
 DataManager.prototype.deleteContentItems = function(filePath, content) {
     return this.db.deleteContentItems(filePath, content)
+}
+
+DataManager.prototype.getOldContentTitles = function(path) {
+    return this.db.getOldTitles(path)
+}
+
+DataManager.prototype.addNewArrayData = function(content, path) {
+    return this.db.addNewArrayData(content, path)
 }
 
 module.exports = DataManager;
